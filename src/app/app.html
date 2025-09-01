@@ -1,25 +1,25 @@
-<div #pdfContent>
-  <div class="container">
-    <div class="tabs">
-      <div
-        class="tab"
-        *ngFor="let tab of tabs; let i = index"
-        [class.active]="i === selectedTabIndex"
-        (click)="selectTab(i)"
-      >
-        {{ tab.title }}
-      </div>
-      <button class="download-btn" (click)="downloadPDF()">Download PDF</button>
+<div class="container">
+  <div class="tabs">
+    <div
+      *ngFor="let tab of tabs; let i = index"
+      class="tab"
+      [class.active]="i === selectedTabIndex"
+      (click)="selectTab(i)"
+    >
+      {{ tab.title }}
     </div>
 
-    <div class="content">
-      <div *ngFor="let tab of tabs; let i = index" [hidden]="i !== selectedTabIndex">
-        <h2>{{ tab.title }}</h2>
-        <p>{{ tab.content }}</p>
-        <img [src]="tab.image" alt="{{ tab.title }}" class="tab-image" crossorigin="anonymous" />
-        <p>
-          <a [href]="tab.link" target="_blank">{{ tab.link }}</a>
-        </p>
+    <button class="download-btn" (click)="downloadPDF()">Download PDF</button>
+  </div>
+
+  <div class="tab-content">
+    <ng-container *ngComponentOutlet="tabs[selectedTabIndex].component"></ng-container>
+  </div>
+
+  <div #pdfContent style="visibility: hidden; position: absolute; left: -9999px; top: -9999px">
+    <div *ngFor="let tab of tabs">
+      <div [id]="'tab-' + tab.id">
+        <ng-container *ngComponentOutlet="tab.component"></ng-container>
       </div>
     </div>
   </div>

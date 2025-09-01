@@ -1,0 +1,13 @@
+<div class="card-container">
+  <div
+    class="social-card"
+    *ngFor="let card of socialCards"
+    [ngClass]="{ 'active': selectedCard === card.id }"
+    (click)="selectCard(card.id)"
+  >
+    <img [src]="card.icon" alt="{{ card.title }} logo" class="icon" />
+    <h3>{{ card.title }}</h3>
+    <p>{{ card.description }}</p>
+    <a [href]="card.link" target="_blank" class="btn">READ MORE</a>
+  </div>
+</div>

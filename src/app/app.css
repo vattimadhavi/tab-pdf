@@ -24,6 +24,9 @@
   background-color: #007bff;
   color: white;
 }
+.tab-content{
+  width: 100%;
+}
 
 .tab-image {
   display: block;

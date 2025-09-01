@@ -1,96 +1,83 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, Type, ViewChild } from '@angular/core';
 import html2pdf from 'html2pdf.js';
+import { Profile } from './tabs/profile/profile';
+import { SocialMedia } from './tabs/social-media/social-media';
+import { Population } from './tabs/population/population';
 
 interface Tab {
+  id: number; // add id
   title: string;
-  content: string;
-  image: string;
-  link: string;
+  component: Type<any>;
 }
+
 @Component({
   selector: 'app-root',
-  imports: [CommonModule],
+  standalone: true,
+  imports: [CommonModule, Profile, SocialMedia, Population],
   templateUrl: './app.html',
-  styleUrl: './app.css'
+  styleUrls: ['./app.css'],
 })
 export class App {
   selectedTabIndex = 0;
-  
+
   tabs: Tab[] = [
-    {
-      title: 'Angular',
-      content: 'A TypeScript-based open-source front-end framework developed by Google for building dynamic, single-page web applications (SPAs). It follows the MVC (Model-View-Controller) pattern and comes with built-in features like routing, forms, HTTP services, and dependency injection.',
-      image: '/images/angular.png',
-      link: 'https://angular.io'
-    },
-    {
-      title: 'React',
-      content: 'A JavaScript library developed by Facebook for building user interfaces, especially single-page applications. It is component-based and uses a virtual DOM for efficient rendering. React focuses only on the view layer and relies on additional libraries for routing or state management.',
-      image: '/images/react.png',
-      link: 'https://react.dev'
-    },
-    {
-      title: 'Vue',
-      content: 'A progressive JavaScript framework for building user interfaces and SPAs, created by Evan You. Vue is lightweight, flexible, and easy to integrate, and it combines the best ideas of Angular and React, offering reactive data binding and a component-based architecture.',
-      image: '/images/vue.png',
-      link: 'https://vuejs.org'
-    }
+    { id: 1, title: 'Profile', component: Profile },
+    { id: 2, title: 'Social Media', component: SocialMedia },
+    { id: 3, title: 'Population Chart', component: Population },
   ];
 
   selectTab(index: number) {
     this.selectedTabIndex = index;
   }
 
-@ViewChild('pdfContent') pdfContent!: ElementRef;
+  @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
 
-downloadPDF() {
-  const pdfContainer = document.createElement('div');
-  pdfContainer.style.padding = '10px';
-  pdfContainer.style.fontFamily = 'Arial, sans-serif';
+  downloadPDF() {
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.padding = '10px';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
 
-  this.tabs.forEach(tab => {
-    // Tab title
-    const tabHeader = document.createElement('h2');
-    tabHeader.innerText = tab.title;
-    tabHeader.style.backgroundColor = '#f0f0f0';
-    tabHeader.style.padding = '5px';
-    tabHeader.style.marginTop = '10px';
-    pdfContainer.appendChild(tabHeader);
+    this.tabs.forEach((tab, index) => {
+      const tabHeader = document.createElement('h2');
+      tabHeader.innerText = tab.title;
+      pdfContainer.appendChild(tabHeader);
 
-    // Tab content
-    const tabContent = document.createElement('p');
-    tabContent.innerText = tab.content;
-    pdfContainer.appendChild(tabContent);
-    const img = document.createElement('img');
-    img.src = tab.image;
-    img.style.width = '80px';
-    img.style.height = '80px';
-    img.style.display = 'block';
-    img.style.marginBottom = '10px';
-    pdfContainer.appendChild(img);
+      const tabElement = document.getElementById(`tab-${tab.id}`);
+      if (tabElement) {
+        const clonedContent = tabElement.cloneNode(true) as HTMLElement;
 
-    // Anchor tag 
-    const link = document.createElement('a');
-    link.href = tab.link;
-    link.innerText = tab.link;
-    link.target = '_blank';
-    link.style.display = 'block'; 
-    link.style.textAlign = 'start'; 
-    link.style.marginBottom = '15px';
-    pdfContainer.appendChild(link);
-  });
+        const canvases = clonedContent.querySelectorAll('canvas');
+        canvases.forEach((clonedCanvas: HTMLCanvasElement, idx) => {
+          const realCanvas = tabElement.querySelectorAll('canvas')[idx] as HTMLCanvasElement;
+          if (realCanvas) {
+            const img = new Image();
+            img.src = realCanvas.toDataURL('image/png');
+            img.style.width = realCanvas.width + 'px';
+            img.style.height = realCanvas.height + 'px';
+            clonedCanvas.parentNode?.replaceChild(img, clonedCanvas);
+          }
+        });
 
-  const options = {
-    margin: 10,
-    filename: 'AllTabsContent.pdf',
-    image: { type: 'png', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+        const pageDiv = document.createElement('div');
+        pageDiv.appendChild(clonedContent);
 
-  html2pdf().set(options).from(pdfContainer).save();
-}
+        if (index < this.tabs.length - 1) {
+          pageDiv.style.pageBreakAfter = 'always';
+        }
 
+        pdfContainer.appendChild(pageDiv);
+      }
+    });
 
+    const options = {
+      margin: 10,
+      filename: 'AllTabsContent.pdf',
+      image: { type: 'png', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    };
+
+    html2pdf().set(options).from(pdfContainer).save();
+  }
 }
